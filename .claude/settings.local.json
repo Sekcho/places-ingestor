@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Read(//c/Users/ADMIN/Pictures/Screenshots/**)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "Read(//d/2025/Report/Area code/**)",
+      "Bash(python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

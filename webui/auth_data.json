@@ -1,0 +1,33 @@
+{
+  "users": {
+    "Admin": "Lead@25"
+  },
+  "usage_count": 5,
+  "sessions": {
+    "c03852ff-79c3-4998-b347-20ded5bba84a": {
+      "username": "Admin",
+      "login_time": "2025-09-25T21:33:53.505273",
+      "active": true
+    },
+    "85cf303b-bdcc-42c8-9e41-1384fdaf39b2": {
+      "username": "Admin",
+      "login_time": "2025-09-25T22:25:50.438051",
+      "active": true
+    },
+    "ffb866b0-ebc0-4aab-bab2-c97c7d8e299e": {
+      "username": "Admin",
+      "login_time": "2025-09-25T22:44:30.794770",
+      "active": true
+    },
+    "a7509aa0-0a45-4157-9683-9db40edf2e2c": {
+      "username": "Admin",
+      "login_time": "2025-09-25T22:47:12.784421",
+      "active": true
+    },
+    "dbbf5b97-5ebe-481d-8d55-9249562abf64": {
+      "username": "Admin",
+      "login_time": "2025-09-25T22:50:02.568536",
+      "active": true
+    }
+  }
+}
