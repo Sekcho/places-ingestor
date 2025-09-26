@@ -23,6 +23,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Copy src directory from project root (since Railway uses webui/backend as root)
+COPY ../../src ./src
+
 # Create necessary directories
 RUN mkdir -p logs data
 
@@ -30,8 +33,8 @@ RUN mkdir -p logs data
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the application
 CMD ["python", "start.py"]

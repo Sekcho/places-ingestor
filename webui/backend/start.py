@@ -17,16 +17,22 @@ load_dotenv()
 
 def main():
     # Get configuration from environment variables
-    host = os.getenv('HOST', '127.0.0.1')
+    # Railway automatically sets PORT, so use that if available
     port = int(os.getenv('PORT', 8000))
-    debug = os.getenv('DEBUG', 'True').lower() == 'true'
+    host = '0.0.0.0'  # Always bind to all interfaces for Railway
+    debug = os.getenv('DEBUG', 'False').lower() == 'true'  # Default to production mode
 
-    # Validate required environment variables
+    # Print environment info for debugging
+    print(f"🔍 Environment PORT: {os.getenv('PORT', 'not set')}")
+    print(f"🔍 Environment HOST: {os.getenv('HOST', 'not set')}")
+    print(f"🔍 Environment DEBUG: {os.getenv('DEBUG', 'not set')}")
+
+    # Validate required environment variables (allow startup without API key for health checks)
     api_key = os.getenv('GOOGLE_PLACES_API_KEY')
     if not api_key:
-        print("❌ Error: GOOGLE_PLACES_API_KEY environment variable is required")
-        print("💡 Please set it in your .env file or environment variables")
-        sys.exit(1)
+        print("⚠️  Warning: GOOGLE_PLACES_API_KEY environment variable not set")
+        print("💡 Please set it in Railway environment variables for full functionality")
+        print("🔄 Starting server anyway for health checks...")
 
     print("🚀 Starting Places Ingestor Backend...")
     print(f"📍 Host: {host}")
@@ -48,16 +54,30 @@ def main():
     if not debug:
         config.update({
             'workers': 1,  # For Railway's single container
-            'loop': 'uvloop',
-            'http': 'httptools'
         })
+        # Only add these if they're available
+        try:
+            import uvloop
+            config['loop'] = 'uvloop'
+        except ImportError:
+            pass
+        try:
+            import httptools
+            config['http'] = 'httptools'
+        except ImportError:
+            pass
+
+    print("🔧 Configuration:", config)
 
     try:
+        print("🚀 Starting uvicorn server...")
         uvicorn.run(**config)
     except KeyboardInterrupt:
         print("\n🛑 Server shutdown requested by user")
     except Exception as e:
         print(f"❌ Failed to start server: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -212,7 +212,12 @@ class PlaceResult(BaseModel):
 # API Endpoints
 @app.get("/")
 async def root():
-    return {"message": "Places Ingestor Web UI API"}
+    return {"message": "Places Ingestor Web UI API", "status": "healthy"}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Railway"""
+    return {"status": "healthy", "timestamp": datetime.datetime.now().isoformat()}
 
 @app.post("/auth/login")
 async def login(request: LoginRequest):
@@ -321,9 +326,9 @@ def get_search_coordinates_and_radius(request: SearchRequest):
 @app.post("/search")
 async def search_places(request: SearchRequest):
     """Search places based on location and business type"""
-    api_key = os.getenv("PLACES_API_KEY")
+    api_key = os.getenv("GOOGLE_PLACES_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="Missing PLACES_API_KEY environment variable")
+        raise HTTPException(status_code=500, detail="Missing GOOGLE_PLACES_API_KEY environment variable")
 
     # Get search coordinates based on hierarchy level
     center_lat, center_lng, default_radius_km = get_search_coordinates_and_radius(request)
