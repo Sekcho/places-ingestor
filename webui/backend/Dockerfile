@@ -23,9 +23,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy admin_areas data from project root (essential for location lookup)
-COPY ../../admin_areas ./admin_areas
-
 # Create necessary directories
 RUN mkdir -p logs data
 
