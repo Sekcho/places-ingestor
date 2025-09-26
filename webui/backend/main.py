@@ -321,7 +321,7 @@ def get_search_coordinates_and_radius(request: SearchRequest):
         tambon = next((t for t in tambons_data if t.get("id") == tambon_id_str), None)
         if tambon and "center" in tambon:
             center_lat, center_lng = tambon["center"]["lat"], tambon["center"]["lng"]
-            default_radius_km = 1.5  # Very specific radius for tambon
+            default_radius_km = 3.0  # Increased radius for tambon to get more results
             print(f"🔍 DEBUG: Found tambon coordinates: {center_lat}, {center_lng}")
         else:
             print(f"❌ DEBUG: Tambon '{tambon_id_str}' not found, falling back to amphoe level")
@@ -335,7 +335,7 @@ def get_search_coordinates_and_radius(request: SearchRequest):
                     avg_lat = sum(t["center"]["lat"] for t in amphoe_tambons) / len(amphoe_tambons)
                     avg_lng = sum(t["center"]["lng"] for t in amphoe_tambons) / len(amphoe_tambons)
                     center_lat, center_lng = avg_lat, avg_lng
-                    default_radius_km = 5  # Amphoe radius as fallback
+                    default_radius_km = 10  # Increased amphoe radius as fallback
                     print(f"🔍 DEBUG: FALLBACK - Using amphoe center: {center_lat}, {center_lng}")
     elif request.amphoe_id:
         # Amphoe level - medium specificity
@@ -348,7 +348,7 @@ def get_search_coordinates_and_radius(request: SearchRequest):
             avg_lat = sum(t["center"]["lat"] for t in amphoe_tambons) / len(amphoe_tambons)
             avg_lng = sum(t["center"]["lng"] for t in amphoe_tambons) / len(amphoe_tambons)
             center_lat, center_lng = avg_lat, avg_lng
-            default_radius_km = 5  # Smaller radius for amphoe to avoid cross-province results
+            default_radius_km = 10  # Increased radius for amphoe to get more results
             print(f"🔍 DEBUG: Calculated amphoe center: {center_lat}, {center_lng}")
         else:
             print(f"❌ DEBUG: No tambons found for amphoe '{amphoe_id_str}'")
@@ -359,7 +359,7 @@ def get_search_coordinates_and_radius(request: SearchRequest):
         print(f"🔍 DEBUG: Available province IDs: {list(PROVINCE_COORDINATES.keys())}")
         if province_id_str in PROVINCE_COORDINATES:
             center_lat, center_lng = PROVINCE_COORDINATES[province_id_str]
-            default_radius_km = 30  # Reduced radius for province
+            default_radius_km = 50  # Increased radius for province to get more results
             print(f"🔍 DEBUG: Found coordinates for {province_id_str}: {center_lat}, {center_lng}")
         else:
             print(f"❌ DEBUG: Province ID '{province_id_str}' not found in PROVINCE_COORDINATES")
@@ -385,9 +385,20 @@ async def search_places(request: SearchRequest):
     # Determine final radius
     final_radius_km = request.radius_km if request.radius_km else default_radius_km
 
-    # Build location parameters - always use circle for flexibility
-    location_bias_circle = (center_lat, center_lng, int(final_radius_km * 1000))
-    location_restriction_rect = None
+    # Build location parameters - use larger rectangle instead of circle for more results
+    # Calculate rectangle bounds from center and radius
+    lat_offset = final_radius_km / 111.0  # ~111 km per degree latitude
+    lng_offset = final_radius_km / (111.0 * abs(center_lat / 90.0))  # longitude varies with latitude
+
+    sw_lat = center_lat - lat_offset
+    sw_lng = center_lng - lng_offset
+    ne_lat = center_lat + lat_offset
+    ne_lng = center_lng + lng_offset
+
+    location_bias_circle = None
+    location_restriction_rect = (sw_lat, sw_lng, ne_lat, ne_lng)
+    print(f"DEBUG: Using rectangle search: SW({sw_lat:.4f}, {sw_lng:.4f}) to NE({ne_lat:.4f}, {ne_lng:.4f})")
+    print(f"DEBUG: Search radius: {final_radius_km} km")
 
     # Build search queries
     if request.freetext:
