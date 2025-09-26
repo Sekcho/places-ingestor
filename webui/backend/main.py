@@ -34,14 +34,22 @@ app.add_middleware(
 # Load admin areas data
 def load_json_file(file_path: Path) -> List[Dict]:
     try:
+        print(f"DEBUG: Attempting to load file: {file_path}")
+        print(f"DEBUG: File exists: {file_path.exists()}")
         with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            data = json.load(f)
+            print(f"DEBUG: Loaded {len(data)} records from {file_path.name}")
+            return data
     except FileNotFoundError:
+        print(f"ERROR: File not found: {file_path}")
+        return []
+    except Exception as e:
+        print(f"ERROR: Error loading {file_path}: {e}")
         return []
 
-provinces_data = load_json_file(project_root / "admin_areas" / "provinces.json")
-amphoes_data = load_json_file(project_root / "admin_areas" / "amphoes.json")
-tambons_data = load_json_file(project_root / "admin_areas" / "tambons.json")
+provinces_data = load_json_file(Path(__file__).parent / "admin_areas" / "provinces.json")
+amphoes_data = load_json_file(Path(__file__).parent / "admin_areas" / "amphoes.json")
+tambons_data = load_json_file(Path(__file__).parent / "admin_areas" / "tambons.json")
 
 # Province coordinates (from parse_dopa_data.py)
 PROVINCE_COORDINATES = {
