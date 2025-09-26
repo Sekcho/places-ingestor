@@ -25,7 +25,16 @@ app = FastAPI(title="Places Ingestor Web UI API", version="1.0.0")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"],  # Vite default ports
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",  # Vite default ports
+        "https://places-ingestor-v2.vercel.app",
+        "https://places-ingestor-v2-fectjpcfi-seksaks-projects.vercel.app",  # Vercel preview URL
+        "https://places-ingestor-v2-git-main-seksaks-projects.vercel.app",  # Git branch URL
+        "https://*.vercel.app"  # All Vercel domains for this project
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
