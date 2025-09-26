@@ -317,14 +317,15 @@ def get_search_coordinates_and_radius(request: SearchRequest):
             default_radius_km = 5  # Smaller radius for amphoe to avoid cross-province results
     elif request.province_id:
         # Province level - broadest search
-        print(f"🔍 DEBUG: Looking for province_id '{request.province_id}' in PROVINCE_COORDINATES")
+        province_id_str = str(request.province_id)  # Convert to string for lookup
+        print(f"🔍 DEBUG: Looking for province_id '{province_id_str}' (type: {type(request.province_id)}) in PROVINCE_COORDINATES")
         print(f"🔍 DEBUG: Available province IDs: {list(PROVINCE_COORDINATES.keys())}")
-        if request.province_id in PROVINCE_COORDINATES:
-            center_lat, center_lng = PROVINCE_COORDINATES[request.province_id]
+        if province_id_str in PROVINCE_COORDINATES:
+            center_lat, center_lng = PROVINCE_COORDINATES[province_id_str]
             default_radius_km = 30  # Reduced radius for province
-            print(f"🔍 DEBUG: Found coordinates for {request.province_id}: {center_lat}, {center_lng}")
+            print(f"🔍 DEBUG: Found coordinates for {province_id_str}: {center_lat}, {center_lng}")
         else:
-            print(f"❌ DEBUG: Province ID '{request.province_id}' not found in PROVINCE_COORDINATES")
+            print(f"❌ DEBUG: Province ID '{province_id_str}' not found in PROVINCE_COORDINATES")
 
     return center_lat, center_lng, default_radius_km
 
