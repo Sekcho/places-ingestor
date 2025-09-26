@@ -134,7 +134,7 @@ def load_terms_data() -> Dict:
 terms_data = load_terms_data()
 
 # Authentication and Usage Counter
-AUTH_DATA_FILE = project_root / "webui" / "auth_data.json"
+AUTH_DATA_FILE = Path("auth_data.json")  # Create in current directory for Railway
 
 def load_auth_data():
     """Load authentication and usage data"""
