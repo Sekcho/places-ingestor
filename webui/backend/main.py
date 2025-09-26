@@ -296,6 +296,7 @@ def build_queries_for_term(term: str, language: str) -> tuple[List[str], List[st
 
 def get_search_coordinates_and_radius(request: SearchRequest):
     """Determine search center and radius based on hierarchy level"""
+    print(f"🔍 DEBUG: Search request - province_id: {request.province_id}, amphoe_id: {request.amphoe_id}, tambon_id: {request.tambon_id}")
     center_lat, center_lng = None, None
     default_radius_km = None
 
@@ -316,9 +317,14 @@ def get_search_coordinates_and_radius(request: SearchRequest):
             default_radius_km = 5  # Smaller radius for amphoe to avoid cross-province results
     elif request.province_id:
         # Province level - broadest search
+        print(f"🔍 DEBUG: Looking for province_id '{request.province_id}' in PROVINCE_COORDINATES")
+        print(f"🔍 DEBUG: Available province IDs: {list(PROVINCE_COORDINATES.keys())}")
         if request.province_id in PROVINCE_COORDINATES:
             center_lat, center_lng = PROVINCE_COORDINATES[request.province_id]
             default_radius_km = 30  # Reduced radius for province
+            print(f"🔍 DEBUG: Found coordinates for {request.province_id}: {center_lat}, {center_lng}")
+        else:
+            print(f"❌ DEBUG: Province ID '{request.province_id}' not found in PROVINCE_COORDINATES")
 
     return center_lat, center_lng, default_radius_km
 
