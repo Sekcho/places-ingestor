@@ -23,9 +23,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy src directory from project root (since Railway uses webui/backend as root)
-COPY ../../src ./src
-
 # Create necessary directories
 RUN mkdir -p logs data
 

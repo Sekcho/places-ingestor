@@ -10,8 +10,7 @@ import uuid
 import datetime
 from pathlib import Path
 
-# Add src directory to path to import places_client
-sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
+# Import places_client from same directory
 from places_client import search_text, get_place_details
 
 # Add project root to environment
