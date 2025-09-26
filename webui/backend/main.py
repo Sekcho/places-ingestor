@@ -410,7 +410,10 @@ async def search_places(request: SearchRequest):
         for itype in inc_types:
             for kw in keywords:
                 page_token = None
+                page_num = 1
+                print(f"DEBUG: Starting search for keyword '{kw}' with type '{itype}'")
                 while True:
+                    print(f"DEBUG: Fetching page {page_num} (token: {'Yes' if page_token else 'No'})")
                     data = search_text(
                         api_key=api_key,
                         text_query=kw,
@@ -421,10 +424,13 @@ async def search_places(request: SearchRequest):
                         location_bias_circle=location_bias_circle,
                         location_restriction_rect=location_restriction_rect,
                         page_token=page_token,
-                        page_size=50,  # Increased from 20 to get more results
+                        page_size=20,  # Google Places API max is 20
                     )
 
                     places = data.get("places", [])
+                    next_page_token = data.get("nextPageToken")
+                    print(f"DEBUG: Page {page_num} returned {len(places)} places, next token: {'Yes' if next_page_token else 'No'}")
+
                     for p in places:
                         pid = p.get("id") or (p.get("name", "").split("/")[-1] if p.get("name") else None)
                         if not pid or pid in seen_ids:
@@ -471,8 +477,11 @@ async def search_places(request: SearchRequest):
 
                     page_token = data.get("nextPageToken")
                     if not page_token:
+                        print(f"DEBUG: No more pages for '{kw}' with type '{itype}' - finished after {page_num} pages")
                         break
 
+                    page_num += 1
+                    print(f"DEBUG: Rate limiting before next page...")
                     # Rate limiting
                     import time
                     time.sleep(1.2)
@@ -480,6 +489,7 @@ async def search_places(request: SearchRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
+    print(f"DEBUG: Search completed - Total results: {len(results)}")
     return [result.dict() for result in results]
 
 if __name__ == "__main__":

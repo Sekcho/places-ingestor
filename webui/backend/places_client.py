@@ -35,7 +35,7 @@ def search_text(
     body: Dict[str, Any] = {
         "textQuery": text_query,
         "languageCode": language_code,
-        "pageSize": min(max(page_size, 1), 20),
+        "pageSize": min(max(page_size, 1), 20),  # Google Places API hard limit is 20
         "includePureServiceAreaBusinesses": include_pure_service_area_businesses,
     }
     if region_code:
