@@ -302,19 +302,30 @@ def get_search_coordinates_and_radius(request: SearchRequest):
 
     if request.tambon_id:
         # Tambon level - most specific
-        tambon = next((t for t in tambons_data if t["id"] == request.tambon_id), None)
+        tambon_id_str = str(request.tambon_id) if request.tambon_id else None
+        print(f"🔍 DEBUG: Looking for tambon_id '{tambon_id_str}'")
+        tambon = next((t for t in tambons_data if t["id"] == tambon_id_str), None)
         if tambon and "center" in tambon:
             center_lat, center_lng = tambon["center"]["lat"], tambon["center"]["lng"]
             default_radius_km = 1.5  # Very specific radius for tambon
+            print(f"🔍 DEBUG: Found tambon coordinates: {center_lat}, {center_lng}")
+        else:
+            print(f"❌ DEBUG: Tambon '{tambon_id_str}' not found or no center data")
     elif request.amphoe_id:
         # Amphoe level - medium specificity
+        amphoe_id_str = str(request.amphoe_id) if request.amphoe_id else None
+        print(f"🔍 DEBUG: Looking for amphoe_id '{amphoe_id_str}'")
         # Calculate amphoe center from its tambons
-        amphoe_tambons = [t for t in tambons_data if t["amphoe_id"] == request.amphoe_id and "center" in t]
+        amphoe_tambons = [t for t in tambons_data if t.get("amphoe_id") == amphoe_id_str and "center" in t]
+        print(f"🔍 DEBUG: Found {len(amphoe_tambons)} tambons for amphoe {amphoe_id_str}")
         if amphoe_tambons:
             avg_lat = sum(t["center"]["lat"] for t in amphoe_tambons) / len(amphoe_tambons)
             avg_lng = sum(t["center"]["lng"] for t in amphoe_tambons) / len(amphoe_tambons)
             center_lat, center_lng = avg_lat, avg_lng
             default_radius_km = 5  # Smaller radius for amphoe to avoid cross-province results
+            print(f"🔍 DEBUG: Calculated amphoe center: {center_lat}, {center_lng}")
+        else:
+            print(f"❌ DEBUG: No tambons found for amphoe '{amphoe_id_str}'")
     elif request.province_id:
         # Province level - broadest search
         province_id_str = str(request.province_id)  # Convert to string for lookup
@@ -384,7 +395,7 @@ async def search_places(request: SearchRequest):
                         location_bias_circle=location_bias_circle,
                         location_restriction_rect=location_restriction_rect,
                         page_token=page_token,
-                        page_size=20,
+                        page_size=50,  # Increased from 20 to get more results
                     )
 
                     places = data.get("places", [])
