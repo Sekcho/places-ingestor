@@ -300,17 +300,35 @@ def get_search_coordinates_and_radius(request: SearchRequest):
     center_lat, center_lng = None, None
     default_radius_km = None
 
-    if request.tambon_id:
+    if request.tambon_id and request.tambon_id.strip():  # Check for non-empty tambon_id
         # Tambon level - most specific
-        tambon_id_str = str(request.tambon_id) if request.tambon_id else None
+        tambon_id_str = str(request.tambon_id).strip()
         print(f"🔍 DEBUG: Looking for tambon_id '{tambon_id_str}'")
-        tambon = next((t for t in tambons_data if t["id"] == tambon_id_str), None)
+        print(f"🔍 DEBUG: Total tambons loaded: {len(tambons_data)}")
+        # Show first few tambons for debugging
+        sample_tambons = tambons_data[:3] if tambons_data else []
+        for i, t in enumerate(sample_tambons):
+            print(f"🔍 DEBUG: Sample tambon {i}: id='{t.get('id')}', amphoe_id='{t.get('amphoe_id')}'")
+
+        tambon = next((t for t in tambons_data if t.get("id") == tambon_id_str), None)
         if tambon and "center" in tambon:
             center_lat, center_lng = tambon["center"]["lat"], tambon["center"]["lng"]
             default_radius_km = 1.5  # Very specific radius for tambon
             print(f"🔍 DEBUG: Found tambon coordinates: {center_lat}, {center_lng}")
         else:
-            print(f"❌ DEBUG: Tambon '{tambon_id_str}' not found or no center data")
+            print(f"❌ DEBUG: Tambon '{tambon_id_str}' not found, falling back to amphoe level")
+            # Fallback to amphoe level if tambon not found
+            if request.amphoe_id:
+                amphoe_id_str = str(request.amphoe_id).strip()
+                print(f"🔍 DEBUG: FALLBACK - Looking for amphoe_id '{amphoe_id_str}'")
+                amphoe_tambons = [t for t in tambons_data if t.get("amphoe_id") == amphoe_id_str and "center" in t]
+                print(f"🔍 DEBUG: FALLBACK - Found {len(amphoe_tambons)} tambons for amphoe {amphoe_id_str}")
+                if amphoe_tambons:
+                    avg_lat = sum(t["center"]["lat"] for t in amphoe_tambons) / len(amphoe_tambons)
+                    avg_lng = sum(t["center"]["lng"] for t in amphoe_tambons) / len(amphoe_tambons)
+                    center_lat, center_lng = avg_lat, avg_lng
+                    default_radius_km = 5  # Amphoe radius as fallback
+                    print(f"🔍 DEBUG: FALLBACK - Using amphoe center: {center_lat}, {center_lng}")
     elif request.amphoe_id:
         # Amphoe level - medium specificity
         amphoe_id_str = str(request.amphoe_id) if request.amphoe_id else None
