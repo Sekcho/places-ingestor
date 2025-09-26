@@ -33,7 +33,6 @@ app.add_middleware(
         "https://places-ingestor-v2.vercel.app",
         "https://places-ingestor-v2-fectjpcfi-seksaks-projects.vercel.app",  # Vercel preview URL
         "https://places-ingestor-v2-git-main-seksaks-projects.vercel.app",  # Git branch URL
-        "https://*.vercel.app"  # All Vercel domains for this project
     ],
     allow_credentials=True,
     allow_methods=["*"],
