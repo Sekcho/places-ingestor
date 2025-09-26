@@ -134,9 +134,18 @@ PROVINCE_COORDINATES = {
 # Load terms data
 def load_terms_data() -> Dict:
     try:
-        with open(project_root / "config" / "terms.yaml", 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
+        terms_path = Path(__file__).parent / "terms.yaml"
+        print(f"DEBUG: Loading terms from: {terms_path}")
+        print(f"DEBUG: Terms file exists: {terms_path.exists()}")
+        with open(terms_path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+            print(f"DEBUG: Loaded {len(data)} terms from terms.yaml")
+            return data
+    except FileNotFoundError as e:
+        print(f"ERROR: Terms file not found: {e}")
+        return {}
+    except Exception as e:
+        print(f"ERROR: Failed to load terms: {e}")
         return {}
 
 terms_data = load_terms_data()
@@ -290,9 +299,15 @@ async def get_tambons(amphoe_id: str = Query(..., description="Amphoe ID")):
 
 def build_queries_for_term(term: str, language: str) -> tuple[List[str], List[str]]:
     """Build queries based on term mapping"""
+    print(f"DEBUG: Looking up term '{term}' in terms_data")
+    print(f"DEBUG: Terms data has {len(terms_data)} entries")
+
     entry = terms_data.get(term) or terms_data.get(term.capitalize()) or terms_data.get(term.lower())
     if not entry:
+        print(f"DEBUG: Term '{term}' not found, using 'other'")
         entry = terms_data.get("other", {"included_types": [], "keywords_th": [], "keywords_en": []})
+    else:
+        print(f"DEBUG: Found entry for '{term}': {entry}")
 
     included_types = entry.get("included_types", []) or []
     if language.startswith("th"):
@@ -300,6 +315,7 @@ def build_queries_for_term(term: str, language: str) -> tuple[List[str], List[st
     else:
         kws = entry.get("keywords_en", []) or entry.get("keywords_th", [])
 
+    print(f"DEBUG: Final included_types: {included_types}, keywords: {kws}")
     return included_types, kws
 
 def get_search_coordinates_and_radius(request: SearchRequest):

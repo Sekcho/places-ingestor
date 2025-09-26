@@ -1,0 +1,144 @@
+# Mapping for business hunting terms (Thai/English) -> Google Places included type(s) + keywords
+# NOTE: includedType in Places v1 accepts only ONE type per request; the pipeline will fan-out across multiple types.
+
+# === ร้านอาหารและเครื่องดื่ม ===
+ร้านอาหาร:
+  included_types: [restaurant]
+  keywords_th: ["ร้านอาหาร","อาหารตามสั่ง","ก๋วยเตี๋ยว","ซีฟู้ด","ปิ้งย่าง","ชาบู","ฮาลาล","อาหารเช้า","อาหารกลางวัน","อาหารเย็น"]
+  keywords_en: ["restaurant","seafood","bbq","hotpot","halal","breakfast","lunch","dinner"]
+
+คาเฟ่:
+  included_types: [cafe]
+  keywords_th: ["คาเฟ่","กาแฟ","ชานม","ชาเขียว","ของหวาน","เบเกอรี่","สมูทตี้","น้ำผลไม้"]
+  keywords_en: ["cafe","coffee","tea","green tea","dessert","bakery","smoothie","juice"]
+
+บาร์:
+  included_types: [bar]
+  keywords_th: ["บาร์","ผับ","ร้านเหล้า","เบียร์บาร์","ค็อกเทล","ไนท์คลับ"]
+  keywords_en: ["bar","pub","beer bar","cocktail bar","nightclub"]
+
+ฟาสต์ฟู้ด:
+  included_types: [meal_delivery, meal_takeaway, restaurant]
+  keywords_th: ["ฟาสต์ฟู้ด","เดลิเวอรี่","สั่งกลับบ้าน","อาหารจานด่วน","แมคโดนัลด์","เคเอฟซี","ซับเวย์"]
+  keywords_en: ["fast food","delivery","takeaway","quick meal","mcdonald","kfc","subway"]
+
+# === ค้าปลีก ===
+ร้านสะดวกซื้อ:
+  included_types: [convenience_store]
+  keywords_th: ["ร้านสะดวกซื้อ","เซเว่น","เซเว่นอีเลฟเว่น","7-11","7 11","แฟมิลี่มาร์ท","ลอว์สัน","มินิสโตป์"]
+  keywords_en: ["convenience store","7-Eleven","Family Mart","Lawson","Mini Stop"]
+
+ซูเปอร์มาร์เก็ต:
+  included_types: [supermarket]
+  keywords_th: ["ซูเปอร์มาร์เก็ต","ร้านของชำ","มินิมาร์ท","โลตัส","บิ๊กซี","แม็คโคร","ท็อปส์","วิลล่า"]
+  keywords_en: ["supermarket","grocery","minimart","Lotus","Big C","Makro","Tops","Villa Market"]
+
+ห้างสรรพสินค้า:
+  included_types: [shopping_mall, department_store]
+  keywords_th: ["ห้างสรรพสินค้า","ศูนย์การค้า","พลาซ่า","เซ็นทรัล","เทอร์มินอล","เอ็มโครเตอร์","ไอคอนสยาม"]
+  keywords_en: ["shopping mall","department store","plaza","Central","Terminal","MBK","ICONSIAM"]
+
+# === สุขภาพและความงาม ===
+โรงพยาบาล:
+  included_types: [hospital]
+  keywords_th: ["โรงพยาบาล","คลินิก","ศูนย์แพทย์","รพ.","โรงพยาบาลเอกชน","โรงพยาบาลรัฐ"]
+  keywords_en: ["hospital","clinic","medical center","private hospital","government hospital"]
+
+คลินิกทันตกรรม:
+  included_types: [dentist]
+  keywords_th: ["คลินิกทันตกรรม","หมอฟัน","ทันตแพทย์","ฟอกสีฟัน","จัดฟัน","ถอนฟัน"]
+  keywords_en: ["dental clinic","dentist","orthodontist","teeth whitening","braces"]
+
+ร้านยา:
+  included_types: [pharmacy]
+  keywords_th: ["ร้านยา","เภสัชกรรม","วัตสัน","บูทส์","ฟาส์ซิโน่"]
+  keywords_en: ["pharmacy","drugstore","Watson","Boots","Fascino"]
+
+สปา:
+  included_types: [spa, beauty_salon]
+  keywords_th: ["สปา","นวดแผนไทย","นวดน้ำมัน","ร้านเสริมสวย","เล็บ","ทำผม","เสาสวย"]
+  keywords_en: ["spa","thai massage","oil massage","beauty salon","nail salon","hair salon"]
+
+# === การเงิน ===
+ธนาคาร:
+  included_types: [bank]
+  keywords_th: ["ธนาคาร","กสิกร","กรุงเทพ","ไทยพาณิชย์","กรุงไทย","ทีเอ็มบี","ยูโอบี","เอทีเอ็ม"]
+  keywords_en: ["bank","Kasikorn","Bangkok Bank","SCB","Krung Thai","TMB","UOB","ATM"]
+
+# === การขนส่งและยานยนต์ ===
+ปั๊มน้ำมัน:
+  included_types: [gas_station]
+  keywords_th: ["ปั๊มน้ำมัน","สถานีบริการน้ำมัน","ปตท.","บางจาก","เชลล์","เอ็กซอน","คาลเท็กซ์","เอสโซ่"]
+  keywords_en: ["gas station","fuel station","PTT","Bangchak","Shell","Esso","Caltex"]
+
+ศูนย์บริการรถยนต์:
+  included_types: [car_repair, car_wash, car_dealer]
+  keywords_th: ["ศูนย์บริการรถยนต์","อู่ซ่อมรถ","ล้างรถ","ตัวแทนจำหน่าย","โตโยต้า","ฮอนด้า","นิสสัน","มาสด้า"]
+  keywords_en: ["car service center","car repair","car wash","car dealer","Toyota","Honda","Nissan","Mazda"]
+
+# === ที่พัก ===
+โรงแรม:
+  included_types: [lodging]
+  keywords_th: ["โรงแรม","รีสอร์ท","เกสต์เฮาส์","บังกะโล","วิลล่า","หอพัก","คอนโด"]
+  keywords_en: ["hotel","resort","guesthouse","bungalow","villa","dormitory","condo"]
+
+# === การศึกษา ===
+โรงเรียน:
+  included_types: [school]
+  keywords_th: ["โรงเรียน","วิทยาลัย","มหาวิทยาลัย","อนุบาล","ประถม","มัธยม","อาชีวศึกษา"]
+  keywords_en: ["school","college","university","kindergarten","primary school","high school"]
+
+# === ความบันเทิง ===
+โรงภาพยนตร์:
+  included_types: [movie_theater]
+  keywords_th: ["โรงภาพยนตร์","โรงหนัง","เมเจอร์","เอสเอฟ","เอพีเค","IMAX"]
+  keywords_en: ["movie theater","cinema","Major","SF","Apex","IMAX"]
+
+สวนสนุก:
+  included_types: [amusement_park, tourist_attraction]
+  keywords_th: ["สวนสนุก","สวนน้ำ","สวนสัตว์","พิพิธภัณฑ์","สถานที่ท่องเที่ยว"]
+  keywords_en: ["amusement park","water park","zoo","museum","tourist attraction"]
+
+# === บริการสาธารณะ ===
+สำนักงานรัฐบาล:
+  included_types: [local_government_office]
+  keywords_th: ["ที่ว่าการ","สำนักงานเขต","อบต.","เทศบาล","สำนักงานภาษี","กรมที่ดิน"]
+  keywords_en: ["district office","municipality","tax office","land office","government office"]
+
+สถานีตำรวจ:
+  included_types: [police]
+  keywords_th: ["สถานีตำรวจ","ตำรวจ","สน.","ด่านตรวจ"]
+  keywords_en: ["police station","police","checkpoint"]
+
+ไปรษณีย์:
+  included_types: [post_office]
+  keywords_th: ["ไปรษณีย์","ที่ทำการไปรษณีย์","ส่งของ","EMS","ไปรษณีย์ไทย"]
+  keywords_en: ["post office","mail","shipping","EMS","Thailand Post"]
+
+# === กีฬาและออกกำลังกาย ===
+ฟิตเนส:
+  included_types: [gym]
+  keywords_th: ["ฟิตเนส","ยิม","เวทเทรนนิ่ง","แอโรบิค","โยคะ","ฟิตเนสเซ็นเตอร์"]
+  keywords_en: ["fitness","gym","weight training","aerobic","yoga","fitness center"]
+
+สนามกีฬา:
+  included_types: [stadium]
+  keywords_th: ["สนามกีฬา","สนามฟุตบอล","สนามบาส","สระว่ายน้ำ","คอร์ทเทนนิส"]
+  keywords_en: ["stadium","football field","basketball court","swimming pool","tennis court"]
+
+# === เทคโนโลยี ===
+ร้านมือถือ:
+  included_types: [electronics_store]
+  keywords_th: ["ร้านมือถือ","ร้านคอมพิวเตอร์","ซ่อมมือถือ","ไอทีมอลล์","พาวเวอร์บาย","อิชิตัน"]
+  keywords_en: ["mobile phone shop","computer store","phone repair","IT mall","Power Buy","iStudio"]
+
+# === อื่นๆ ===
+ร้านซักรีด:
+  included_types: [laundry]
+  keywords_th: ["ร้านซักรีด","ซักแห้ง","ซักอบรีด","ร้านซักผ้า"]
+  keywords_en: ["laundry","dry cleaning","wash and fold"]
+
+อื่นๆ:
+  included_types: []
+  keywords_th: []
+  keywords_en: []
