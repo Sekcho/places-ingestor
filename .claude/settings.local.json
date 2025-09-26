@@ -6,7 +6,11 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebSearch",
       "Read(//d/2025/Report/Area code/**)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(cp:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
