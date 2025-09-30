@@ -629,18 +629,31 @@ async def search_places(request: SearchRequest):
                 print(f"DEBUG: Starting search for keyword '{kw}' with type '{itype}'")
                 while True:
                     print(f"DEBUG: Fetching page {page_num} (token: {'Yes' if page_token else 'No'})")
-                    data = search_text(
-                        api_key=api_key,
-                        text_query=kw,
-                        language_code=request.language,
-                        region_code=request.region,
-                        included_type=itype,
-                        strict_type_filtering=True if itype else False,  # Match local version behavior
-                        location_bias_circle=location_bias_circle,
-                        location_restriction_rect=location_restriction_rect,
-                        page_token=page_token,
-                        page_size=20,  # Google Places API max is 20
-                    )
+                    # Use only one location parameter to avoid API error
+                    if location_restriction_rect:
+                        data = search_text(
+                            api_key=api_key,
+                            text_query=kw,
+                            language_code=request.language,
+                            region_code=request.region,
+                            included_type=itype,
+                            strict_type_filtering=True if itype else False,
+                            location_restriction_rect=location_restriction_rect,
+                            page_token=page_token,
+                            page_size=20,
+                        )
+                    else:
+                        data = search_text(
+                            api_key=api_key,
+                            text_query=kw,
+                            language_code=request.language,
+                            region_code=request.region,
+                            included_type=itype,
+                            strict_type_filtering=True if itype else False,
+                            location_bias_circle=location_bias_circle,
+                            page_token=page_token,
+                            page_size=20,
+                        )
 
                     places = data.get("places", [])
                     next_page_token = data.get("nextPageToken")
