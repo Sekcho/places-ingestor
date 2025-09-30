@@ -235,6 +235,26 @@ async def health_check():
     """Health check endpoint for Railway"""
     return {"status": "healthy", "timestamp": datetime.datetime.now().isoformat()}
 
+@app.get("/ping")
+async def ping_self():
+    """Ping endpoint that makes outbound request to prevent Railway sleep"""
+    import httpx
+    try:
+        # Make an outbound request to keep service awake
+        async with httpx.AsyncClient() as client:
+            response = await client.get("https://httpbin.org/ip", timeout=5)
+            return {
+                "status": "awake",
+                "timestamp": datetime.datetime.now().isoformat(),
+                "external_ip": response.json() if response.status_code == 200 else None
+            }
+    except Exception as e:
+        return {
+            "status": "awake",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "error": str(e)
+        }
+
 @app.post("/auth/login")
 async def login(request: LoginRequest):
     """Authenticate user and return session token"""
@@ -319,92 +339,270 @@ def build_queries_for_term(term: str, language: str) -> tuple[List[str], List[st
     return included_types, kws
 
 def get_search_coordinates_and_radius(request: SearchRequest):
-    """Determine search center and radius based on hierarchy level"""
-    print(f"🔍 DEBUG: Search request - province_id: {request.province_id}, amphoe_id: {request.amphoe_id}, tambon_id: {request.tambon_id}")
+    """Determine search center and radius based on hierarchy level - ORIGINAL WORKING VERSION"""
+    print(f"DEBUG: Search request - province_id: {request.province_id}, amphoe_id: {request.amphoe_id}, tambon_id: {request.tambon_id}")
     center_lat, center_lng = None, None
     default_radius_km = None
 
-    if request.tambon_id and request.tambon_id.strip():  # Check for non-empty tambon_id
+    if request.tambon_id and request.tambon_id.strip():
         # Tambon level - most specific
         tambon_id_str = str(request.tambon_id).strip()
-        print(f"🔍 DEBUG: Looking for tambon_id '{tambon_id_str}'")
-        print(f"🔍 DEBUG: Total tambons loaded: {len(tambons_data)}")
-        # Show first few tambons for debugging
-        sample_tambons = tambons_data[:3] if tambons_data else []
-        for i, t in enumerate(sample_tambons):
-            print(f"🔍 DEBUG: Sample tambon {i}: id='{t.get('id')}', amphoe_id='{t.get('amphoe_id')}'")
-
+        print(f"DEBUG: Looking for tambon_id '{tambon_id_str}'")
         tambon = next((t for t in tambons_data if t.get("id") == tambon_id_str), None)
         if tambon and "center" in tambon:
             center_lat, center_lng = tambon["center"]["lat"], tambon["center"]["lng"]
-            default_radius_km = 1.5  # Same as local version
-            print(f"🔍 DEBUG: Found tambon coordinates: {center_lat}, {center_lng}")
+            default_radius_km = 1.5
+            print(f"DEBUG: Found tambon coordinates: {center_lat}, {center_lng}")
         else:
-            print(f"❌ DEBUG: Tambon '{tambon_id_str}' not found, falling back to amphoe level")
-            # Fallback to amphoe level if tambon not found
+            print(f"DEBUG: Tambon '{tambon_id_str}' not found, falling back to amphoe level")
             if request.amphoe_id:
                 amphoe_id_str = str(request.amphoe_id).strip()
-                print(f"🔍 DEBUG: FALLBACK - Looking for amphoe_id '{amphoe_id_str}'")
                 amphoe_tambons = [t for t in tambons_data if t.get("amphoe_id") == amphoe_id_str and "center" in t]
-                print(f"🔍 DEBUG: FALLBACK - Found {len(amphoe_tambons)} tambons for amphoe {amphoe_id_str}")
                 if amphoe_tambons:
                     avg_lat = sum(t["center"]["lat"] for t in amphoe_tambons) / len(amphoe_tambons)
                     avg_lng = sum(t["center"]["lng"] for t in amphoe_tambons) / len(amphoe_tambons)
                     center_lat, center_lng = avg_lat, avg_lng
-                    default_radius_km = 5  # Same as local version
-                    print(f"🔍 DEBUG: FALLBACK - Using amphoe center: {center_lat}, {center_lng}")
+                    default_radius_km = 5
+                    print(f"DEBUG: FALLBACK - Using amphoe center: {center_lat}, {center_lng}")
     elif request.amphoe_id:
         # Amphoe level - medium specificity
         amphoe_id_str = str(request.amphoe_id) if request.amphoe_id else None
-        print(f"🔍 DEBUG: Looking for amphoe_id '{amphoe_id_str}'")
-        # Calculate amphoe center from its tambons
+        print(f"DEBUG: Looking for amphoe_id '{amphoe_id_str}'")
         amphoe_tambons = [t for t in tambons_data if t.get("amphoe_id") == amphoe_id_str and "center" in t]
-        print(f"🔍 DEBUG: Found {len(amphoe_tambons)} tambons for amphoe {amphoe_id_str}")
+        print(f"DEBUG: Found {len(amphoe_tambons)} tambons for amphoe {amphoe_id_str}")
         if amphoe_tambons:
             avg_lat = sum(t["center"]["lat"] for t in amphoe_tambons) / len(amphoe_tambons)
             avg_lng = sum(t["center"]["lng"] for t in amphoe_tambons) / len(amphoe_tambons)
             center_lat, center_lng = avg_lat, avg_lng
-            default_radius_km = 5  # Same as local version
-            print(f"🔍 DEBUG: Calculated amphoe center: {center_lat}, {center_lng}")
+            default_radius_km = 5
+            print(f"DEBUG: Calculated amphoe center: {center_lat}, {center_lng}")
         else:
-            print(f"❌ DEBUG: No tambons found for amphoe '{amphoe_id_str}'")
+            print(f"DEBUG: No tambons found for amphoe '{amphoe_id_str}'")
     elif request.province_id:
         # Province level - broadest search
-        province_id_str = str(request.province_id)  # Convert to string for lookup
-        print(f"🔍 DEBUG: Looking for province_id '{province_id_str}' (type: {type(request.province_id)}) in PROVINCE_COORDINATES")
-        print(f"🔍 DEBUG: Available province IDs: {list(PROVINCE_COORDINATES.keys())}")
+        province_id_str = str(request.province_id)
+        print(f"DEBUG: Looking for province_id '{province_id_str}'")
         if province_id_str in PROVINCE_COORDINATES:
             center_lat, center_lng = PROVINCE_COORDINATES[province_id_str]
-            default_radius_km = 30  # Same as local version
-            print(f"🔍 DEBUG: Found coordinates for {province_id_str}: {center_lat}, {center_lng}")
+            default_radius_km = 30
+            print(f"DEBUG: Found coordinates for {province_id_str}: {center_lat}, {center_lng}")
         else:
-            print(f"❌ DEBUG: Province ID '{province_id_str}' not found in PROVINCE_COORDINATES")
+            print(f"DEBUG: Province ID '{province_id_str}' not found in PROVINCE_COORDINATES")
 
     return center_lat, center_lng, default_radius_km
+
+def get_search_location_params(request: SearchRequest):
+    """Determine search location parameters using Professional approach:
+    Primary: Rectangle bounds (bbox)
+    Fallback: Circle radius
+    """
+    print(f"DEBUG: Professional search - province_id: {request.province_id}, amphoe_id: {request.amphoe_id}, tambon_id: {request.tambon_id}")
+
+    # Return values
+    location_restriction_rect = None  # Primary method
+    location_bias_circle = None       # Fallback method
+    search_method = None
+    admin_name = None  # For address filtering
+
+    if request.tambon_id and request.tambon_id.strip():
+        # TAMBON LEVEL - Use Professional Rectangle Bounds + Fallback
+        tambon_id_str = str(request.tambon_id).strip()
+        print(f"DEBUG: TAMBON LEVEL - Looking for tambon_id '{tambon_id_str}'")
+
+        tambon = next((t for t in tambons_data if t.get("id") == tambon_id_str), None)
+        if tambon:
+            admin_name = tambon.get("name_th", "")
+            print(f"DEBUG: Found tambon '{admin_name}'")
+
+            # PRIMARY: Try Rectangle Bounds (bbox)
+            if "bbox" in tambon and tambon["bbox"]:
+                bbox = tambon["bbox"]
+                location_restriction_rect = {
+                    "low": {"latitude": bbox[0], "longitude": bbox[1]},
+                    "high": {"latitude": bbox[2], "longitude": bbox[3]}
+                }
+                search_method = "rectangle_bounds"
+                print(f"DEBUG: Using RECTANGLE BOUNDS for tambon: {bbox}")
+
+            # FALLBACK: Circle (1.5km)
+            if "center" in tambon:
+                center = tambon["center"]
+                location_bias_circle = (center["lat"], center["lng"], 1500)  # 1.5km fallback
+                if search_method is None:
+                    search_method = "fallback_circle"
+                    print(f"DEBUG: Using FALLBACK CIRCLE for tambon: center({center['lat']}, {center['lng']}) radius=1.5km")
+
+        # If tambon not found, fallback to amphoe
+        if not tambon and request.amphoe_id:
+            print(f"DEBUG: Tambon not found, falling back to amphoe level")
+            return get_amphoe_location_params(request)
+    elif request.amphoe_id:
+        return get_amphoe_location_params(request)
+    elif request.province_id:
+        return get_province_location_params(request)
+
+    return {
+        "rectangle_bounds": location_restriction_rect,
+        "fallback_circle": location_bias_circle,
+        "primary_method_available": search_method is not None,
+        "search_method": search_method,
+        "admin_name": admin_name
+    }
+
+def get_amphoe_location_params(request: SearchRequest):
+    """Get location parameters for Amphoe level search"""
+    amphoe_id_str = str(request.amphoe_id).strip()
+    print(f"DEBUG: AMPHOE LEVEL - Looking for amphoe_id '{amphoe_id_str}'")
+
+    # Get all tambons in this amphoe
+    amphoe_tambons = [t for t in tambons_data if t.get("amphoe_id") == amphoe_id_str]
+    print(f"DEBUG: Found {len(amphoe_tambons)} tambons for amphoe {amphoe_id_str}")
+
+    if not amphoe_tambons:
+        print(f"DEBUG: No tambons found for amphoe '{amphoe_id_str}'")
+        return None, None, None, None
+
+    # Get amphoe name from first tambon
+    amphoe_name = None
+    for tambon in amphoe_tambons:
+        if "amphoe_name_th" in tambon:
+            amphoe_name = tambon["amphoe_name_th"]
+            break
+
+    # PRIMARY: Calculate amphoe bounding box from all tambons
+    all_bboxes = [t["bbox"] for t in amphoe_tambons if "bbox" in t and t["bbox"]]
+    if all_bboxes:
+        # Calculate combined bounding box
+        min_lat = min(bbox[0] for bbox in all_bboxes)
+        min_lng = min(bbox[1] for bbox in all_bboxes)
+        max_lat = max(bbox[2] for bbox in all_bboxes)
+        max_lng = max(bbox[3] for bbox in all_bboxes)
+
+        location_restriction_rect = {
+            "low": {"latitude": min_lat, "longitude": min_lng},
+            "high": {"latitude": max_lat, "longitude": max_lng}
+        }
+        search_method = "rectangle_bounds"
+        print(f"DEBUG: Using RECTANGLE BOUNDS for amphoe: [{min_lat}, {min_lng}, {max_lat}, {max_lng}]")
+    else:
+        location_restriction_rect = None
+        search_method = None
+
+    # FALLBACK: Calculate center and use circle (8km)
+    tambons_with_center = [t for t in amphoe_tambons if "center" in t]
+    if tambons_with_center:
+        avg_lat = sum(t["center"]["lat"] for t in tambons_with_center) / len(tambons_with_center)
+        avg_lng = sum(t["center"]["lng"] for t in tambons_with_center) / len(tambons_with_center)
+        location_bias_circle = (avg_lat, avg_lng, 8000)  # 8km fallback
+
+        if search_method is None:
+            search_method = "fallback_circle"
+            print(f"DEBUG: Using FALLBACK CIRCLE for amphoe: center({avg_lat}, {avg_lng}) radius=8km")
+    else:
+        location_bias_circle = None
+
+    return {
+        "rectangle_bounds": location_restriction_rect,
+        "fallback_circle": location_bias_circle,
+        "primary_method_available": search_method is not None,
+        "search_method": search_method,
+        "admin_name": amphoe_name
+    }
+
+def get_province_location_params(request: SearchRequest):
+    """Get location parameters for Province level search"""
+    province_id_str = str(request.province_id)
+    print(f"DEBUG: PROVINCE LEVEL - Looking for province_id '{province_id_str}'")
+
+    if province_id_str in PROVINCE_COORDINATES:
+        center_lat, center_lng = PROVINCE_COORDINATES[province_id_str]
+        location_bias_circle = (center_lat, center_lng, 50000)  # 50km for province
+        search_method = "circle_only"
+        print(f"DEBUG: Using CIRCLE for province: center({center_lat}, {center_lng}) radius=50km")
+        return {
+            "rectangle_bounds": None,
+            "fallback_circle": location_bias_circle,
+            "primary_method_available": True,
+            "search_method": search_method,
+            "admin_name": None
+        }
+    else:
+        print(f"DEBUG: Province ID '{province_id_str}' not found")
+        return {
+            "rectangle_bounds": None,
+            "fallback_circle": None,
+            "primary_method_available": False,
+            "search_method": None,
+            "admin_name": None
+        }
+
+def apply_address_filtering(places, admin_name, request):
+    """Apply Professional Address Component Filtering"""
+    if not admin_name or not places:
+        return places
+
+    filtered_places = []
+    admin_name_lower = admin_name.lower()
+
+    print(f"DEBUG: Address filtering for admin '{admin_name}' on {len(places)} places")
+
+    for place in places:
+        # Get address from place
+        address = ""
+        if "formattedAddress" in place:
+            address = place["formattedAddress"].lower()
+        elif "displayName" in place and "text" in place["displayName"]:
+            address = place["displayName"]["text"].lower()
+
+        # For tambon/amphoe level - require admin name in address
+        if request.tambon_id or request.amphoe_id:
+            if admin_name_lower in address:
+                filtered_places.append(place)
+            else:
+                print(f"DEBUG: Filtered out '{place.get('displayName', {}).get('text', 'Unknown')}' - no '{admin_name}' in address")
+        else:
+            # Province level - no filtering
+            filtered_places.append(place)
+
+    print(f"DEBUG: Address filtering result: {len(filtered_places)}/{len(places)} places passed")
+    return filtered_places
+
+@app.get("/search")
+async def search_places_get():
+    """GET endpoint for testing - shows that backend is working"""
+    return {"message": "Search endpoint is working! Use POST method with JSON body.", "status": "ready"}
 
 @app.post("/search")
 async def search_places(request: SearchRequest):
     """Search places based on location and business type"""
+    print(f"🔥 SEARCH ENDPOINT CALLED - REQUEST: {request}")
     api_key = os.getenv("GOOGLE_PLACES_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="Missing GOOGLE_PLACES_API_KEY environment variable")
 
-    # Get search coordinates based on hierarchy level
-    center_lat, center_lng, default_radius_km = get_search_coordinates_and_radius(request)
+    # Get search location params based on hierarchy level (PROFESSIONAL APPROACH)
+    location_params = get_search_location_params(request)
 
-    if not center_lat or not center_lng:
+    if not location_params.get("primary_method_available"):
         raise HTTPException(status_code=400, detail="Could not determine search location")
 
     # Determine search query
     search_term = request.freetext or request.term or "restaurant"
 
-    # Determine final radius
-    final_radius_km = request.radius_km if request.radius_km else default_radius_km
+    # Use Professional location parameters
+    location_bias_circle = location_params.get("fallback_circle")
+    location_restriction_rect = location_params.get("rectangle_bounds")
 
-    # Build location parameters - use circle like local version
-    location_bias_circle = (center_lat, center_lng, int(final_radius_km * 1000))
-    location_restriction_rect = None
-    print(f"DEBUG: Using circle search: center({center_lat:.4f}, {center_lng:.4f}) radius: {final_radius_km} km")
+    if location_restriction_rect:
+        print(f"DEBUG: Using rectangle bounds: {location_restriction_rect}")
+    elif location_bias_circle:
+        center_lat, center_lng, radius_m = location_bias_circle
+        print(f"DEBUG: Using fallback circle: center({center_lat:.4f}, {center_lng:.4f}) radius: {radius_m/1000} km")
+
+    # Get admin filtering info
+    admin_name = location_params.get("admin_name")
+    if admin_name:
+        print(f"DEBUG: Will apply address filtering for: {admin_name}")
 
     # Build search queries
     if request.freetext:
@@ -446,7 +644,13 @@ async def search_places(request: SearchRequest):
 
                     places = data.get("places", [])
                     next_page_token = data.get("nextPageToken")
-                    print(f"DEBUG: Page {page_num} returned {len(places)} places, next token: {'Yes' if next_page_token else 'No'}")
+                    print(f"DEBUG: Page {page_num} returned {len(places)} places (before filtering), next token: {'Yes' if next_page_token else 'No'}")
+
+                    # Quick Fix: Simple Address Filtering for Thepa case
+                    if admin_name and admin_name == "เทพา":
+                        original_count = len(places)
+                        places = [p for p in places if "เทพา" in str(p.get("formattedAddress", "")).lower() or "thepha" in str(p.get("formattedAddress", "")).lower()]
+                        print(f"DEBUG: THEPA FILTER - Before: {original_count}, After: {len(places)} places")
 
                     for p in places:
                         pid = p.get("id") or (p.get("name", "").split("/")[-1] if p.get("name") else None)

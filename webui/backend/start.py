@@ -23,22 +23,22 @@ def main():
     debug = os.getenv('DEBUG', 'False').lower() == 'true'  # Default to production mode
 
     # Print environment info for debugging
-    print(f"🔍 Environment PORT: {os.getenv('PORT', 'not set')}")
-    print(f"🔍 Environment HOST: {os.getenv('HOST', 'not set')}")
-    print(f"🔍 Environment DEBUG: {os.getenv('DEBUG', 'not set')}")
+    print(f"Environment PORT: {os.getenv('PORT', 'not set')}")
+    print(f"Environment HOST: {os.getenv('HOST', 'not set')}")
+    print(f"Environment DEBUG: {os.getenv('DEBUG', 'not set')}")
 
     # Validate required environment variables (allow startup without API key for health checks)
     api_key = os.getenv('GOOGLE_PLACES_API_KEY')
     if not api_key:
-        print("⚠️  Warning: GOOGLE_PLACES_API_KEY environment variable not set")
-        print("💡 Please set it in Railway environment variables for full functionality")
-        print("🔄 Starting server anyway for health checks...")
+        print("Warning: GOOGLE_PLACES_API_KEY environment variable not set")
+        print("Please set it in Railway environment variables for full functionality")
+        print("Starting server anyway for health checks...")
 
-    print("🚀 Starting Places Ingestor Backend...")
-    print(f"📍 Host: {host}")
-    print(f"🔌 Port: {port}")
-    print(f"🔧 Debug: {debug}")
-    print(f"🗝️  API Key: {'✅ Set' if api_key else '❌ Missing'}")
+    print("Starting Places Ingestor Backend...")
+    print(f"Host: {host}")
+    print(f"Port: {port}")
+    print(f"Debug: {debug}")
+    print(f"API Key: {'Set' if api_key else 'Missing'}")
 
     # Configure uvicorn
     config = {
@@ -67,15 +67,15 @@ def main():
         except ImportError:
             pass
 
-    print("🔧 Configuration:", config)
+    print("Configuration:", config)
 
     try:
-        print("🚀 Starting uvicorn server...")
+        print("Starting uvicorn server...")
         uvicorn.run(**config)
     except KeyboardInterrupt:
-        print("\n🛑 Server shutdown requested by user")
+        print("\nServer shutdown requested by user")
     except Exception as e:
-        print(f"❌ Failed to start server: {e}")
+        print(f"Failed to start server: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
