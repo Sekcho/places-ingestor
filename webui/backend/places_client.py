@@ -50,8 +50,13 @@ def search_text(
         lat, lng, radius = location_bias_circle
         body["locationBias"] = {"circle": {"center": {"latitude": lat, "longitude": lng}, "radius": int(radius)}}
     if location_restriction_rect:
-        sw_lat, sw_lng, ne_lat, ne_lng = location_restriction_rect
-        body["locationRestriction"] = {"rectangle": {"low": {"latitude": sw_lat, "longitude": sw_lng}, "high": {"latitude": ne_lat, "longitude": ne_lng}}}
+        if isinstance(location_restriction_rect, dict):
+            # Already in correct format from main.py
+            body["locationRestriction"] = {"rectangle": location_restriction_rect}
+        else:
+            # Legacy tuple format (sw_lat, sw_lng, ne_lat, ne_lng)
+            sw_lat, sw_lng, ne_lat, ne_lng = location_restriction_rect
+            body["locationRestriction"] = {"rectangle": {"low": {"latitude": sw_lat, "longitude": sw_lng}, "high": {"latitude": ne_lat, "longitude": ne_lng}}}
     if page_token:
         body["pageToken"] = page_token
 

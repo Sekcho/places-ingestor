@@ -575,7 +575,7 @@ async def search_places_get():
 @app.post("/search")
 async def search_places(request: SearchRequest):
     """Search places based on location and business type"""
-    print(f"🔥 SEARCH ENDPOINT CALLED - REQUEST: {request}")
+    print(f"DEBUG: SEARCH ENDPOINT CALLED - REQUEST: {request}")
     api_key = os.getenv("GOOGLE_PLACES_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="Missing GOOGLE_PLACES_API_KEY environment variable")
