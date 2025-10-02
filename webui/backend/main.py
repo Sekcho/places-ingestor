@@ -567,6 +567,17 @@ def apply_address_filtering(places, admin_name, request):
     print(f"DEBUG: Address filtering result: {len(filtered_places)}/{len(places)} places passed")
     return filtered_places
 
+@app.get("/stats")
+async def get_stats():
+    """Get system statistics"""
+    return {
+        "provinces": len(provinces_data),
+        "amphoes": len(amphoes_data),
+        "tambons": len(tambons_data),
+        "terms": len(terms_data),
+        "status": "operational"
+    }
+
 @app.get("/search")
 async def search_places_get():
     """GET endpoint for testing - shows that backend is working"""
@@ -631,6 +642,7 @@ async def search_places(request: SearchRequest):
                     print(f"DEBUG: Fetching page {page_num} (token: {'Yes' if page_token else 'No'})")
                     # Use only one location parameter to avoid API error
                     if location_restriction_rect:
+                        # First try strict restriction
                         data = search_text(
                             api_key=api_key,
                             text_query=kw,
@@ -642,6 +654,25 @@ async def search_places(request: SearchRequest):
                             page_token=page_token,
                             page_size=20,
                         )
+
+                        # If no results, try locationBias instead for better coverage
+                        if not data.get("places") and not page_token:  # Only on first page
+                            print(f"DEBUG: No results with locationRestriction, trying locationBias for better coverage")
+                            center_lat = (location_restriction_rect["low"]["latitude"] + location_restriction_rect["high"]["latitude"]) / 2
+                            center_lng = (location_restriction_rect["low"]["longitude"] + location_restriction_rect["high"]["longitude"]) / 2
+                            radius_m = 15000  # 15km radius for better coverage
+
+                            data = search_text(
+                                api_key=api_key,
+                                text_query=kw,
+                                language_code=request.language,
+                                region_code=request.region,
+                                included_type=itype,
+                                strict_type_filtering=False,  # Less strict
+                                location_bias_circle=(center_lat, center_lng, radius_m),
+                                page_token=None,  # Start fresh
+                                page_size=20,
+                            )
                     else:
                         data = search_text(
                             api_key=api_key,
@@ -725,6 +756,87 @@ async def search_places(request: SearchRequest):
 
     print(f"DEBUG: Search completed - Total results: {len(results)}")
     return [result.dict() for result in results]
+
+
+# New endpoint for exporting Google Maps results to CSV
+@app.post("/export-csv")
+async def export_csv(request: dict):
+    """
+    Export Google Maps Places Service results to CSV format
+    Accepts results array from frontend and converts to CSV
+    """
+    try:
+        results = request.get("results", [])
+        search_params = request.get("search_params", {})
+
+        if not results:
+            raise HTTPException(status_code=400, detail="No results provided for export")
+
+        # Convert results to CSV format
+        import csv
+        import io
+        from datetime import datetime
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # CSV headers
+        headers = [
+            'province', 'name', 'formatted_address', 'lat', 'lng',
+            'website', 'phone_national', 'types', 'google_maps_uri',
+            'place_id', 'source_term', 'rating', 'user_ratings_total',
+            'distance_km', 'search_method'
+        ]
+        writer.writerow(headers)
+
+        # Write data rows
+        for result in results:
+            row = [
+                result.get('province', ''),
+                result.get('name', ''),
+                result.get('formatted_address', ''),
+                result.get('lat', ''),
+                result.get('lng', ''),
+                result.get('website', ''),
+                result.get('phone_national', ''),
+                result.get('types', ''),
+                result.get('google_maps_uri', ''),
+                result.get('place_id', ''),
+                result.get('source_term', ''),
+                result.get('rating', ''),
+                result.get('user_ratings_total', ''),
+                result.get('distance_km', ''),
+                result.get('search_method', 'google_maps_js_api')
+            ]
+            writer.writerow(row)
+
+        csv_content = output.getvalue()
+        output.close()
+
+        # Generate filename
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        location_part = ""
+        if search_params.get('tambon_name'):
+            location_part = f"_{search_params['tambon_name']}"
+        elif search_params.get('amphoe_name'):
+            location_part = f"_{search_params['amphoe_name']}"
+        elif search_params.get('province_name'):
+            location_part = f"_{search_params['province_name']}"
+
+        filename = f"places_google_maps{location_part}_{timestamp}.csv"
+
+        # Return CSV as downloadable file
+        from fastapi.responses import Response
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+
+    except Exception as e:
+        print(f"Export CSV failed: {e}")
+        raise HTTPException(status_code=500, detail=f"CSV export failed: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn
